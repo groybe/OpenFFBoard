@@ -64,8 +64,10 @@ private:
 
 		static constexpr int numUserButtons{12};
 
+		void updateButtonStates();
 		uint16_t getUserButtons();
 		bool getReverseButton();
+		bool getSequentialToggle();
 	private:
 		uint16_t buttonStates{0};
 
@@ -87,6 +89,7 @@ private:
 	uint16_t x_val{0};
 	uint16_t y_val{0};
 	bool reverseButtonState{false};
+	bool sequentialToggleState{false};
 	uint8_t gear{0};
 
 	uint8_t bitshift = 0;
@@ -99,7 +102,7 @@ private:
 	void setMode(ShifterMode newMode);
 	void setCSPin(uint8_t new_cs_pin_num);
 	void calculateGear();
-	void updateReverseState();
+	void updateShifterState();
 	int getUserButtons(uint64_t* buf);
 };
 

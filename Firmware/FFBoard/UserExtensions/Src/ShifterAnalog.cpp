@@ -98,12 +98,26 @@ void ShifterAnalog::calculateGear() {
 		if(gear == 6 && reverseButtonState){
 			gear = 7; // Reverse
 		}
+
+		if(gear == 3 && sequentialToggleState){
+			gear = 8; // seq up
+		}
+
+		if(gear == 4 && sequentialToggleState){
+			gear = 9; // seq down
+		}
 	}
 }
 
-void ShifterAnalog::updateReverseState() {
+void ShifterAnalog::G27ShifterButtonClient::updateButtonStates() {
+	external_spi.receive_DMA(reinterpret_cast<uint8_t*>(&buttonStates), sizeof(buttonStates), this);
+}
+
+void ShifterAnalog::updateShifterState() {
 	if (g27ShifterButtonClient) {
+		g27ShifterButtonClient->updateButtonStates();
 		reverseButtonState = g27ShifterButtonClient->getReverseButton();
+		sequentialToggleState = g27ShifterButtonClient->getSequentialToggle();
 	} else {
 		reverseButtonState = LocalButtons::readButton(reverseButtonNum-1);
 	}
@@ -121,7 +135,7 @@ int ShifterAnalog::getUserButtons(uint64_t* buf) {
 uint8_t ShifterAnalog::readButtons(uint64_t* buf){
 	updateAdc();
 
-	updateReverseState();
+	updateShifterState();
 	calculateGear();
 
 	*buf = 0;
@@ -138,7 +152,7 @@ uint8_t ShifterAnalog::readButtons(uint64_t* buf){
 
 uint16_t ShifterAnalog::getBtnNum(){
 	constexpr int numSequentialButtons{2};
-	constexpr int numHPatternButtons{7};
+	constexpr int numHPatternButtons{9};
 
 	switch(mode) {
 		case ShifterMode::G29_seq:
@@ -275,10 +289,12 @@ ShifterAnalog::G27ShifterButtonClient::G27ShifterButtonClient(OutputPin& csPin)
 
 }
 
-
 bool ShifterAnalog::G27ShifterButtonClient::getReverseButton() {
-	external_spi.receive_DMA(reinterpret_cast<uint8_t*>(&buttonStates), sizeof(buttonStates),this);
 	return buttonStates & 0x02;
+}
+
+bool ShifterAnalog::G27ShifterButtonClient::getSequentialToggle() {
+	return buttonStates & 0x08;
 }
 
 uint16_t ShifterAnalog::G27ShifterButtonClient::getUserButtons() {
